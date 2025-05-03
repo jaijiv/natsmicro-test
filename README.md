@@ -1,45 +1,44 @@
 # NATS Microservice Example with Worker Pool
 
-This repository demonstrates different worker pool implementations for NATS microservices in Go.
+This repository demonstrates an efficient worker pool implementation for NATS microservices in Go.
 
-## Pool Server Implementation
+## Implementation with errgroup
 
-The `poolserver.go` file implements a NATS microservice with a `sync.Pool` of worker goroutines. This implementation offers advantages over a fixed worker pool:
+The server implements a NATS microservice with an errgroup-based worker pool. This implementation offers significant advantages:
 
-1. **Better resource utilization**: Workers are returned to the pool after handling a request
-2. **Automatic scaling**: The pool can grow or shrink based on demand
-3. **Improved performance**: Reusing goroutines reduces allocation overhead
-4. **Reduced contention**: Workers are independently managed and don't block each other
+1. **Better error handling**: Uses errgroup for proper error propagation between workers
+2. **Graceful shutdown**: Context cancellation allows clean shutdown of all workers
+3. **Centralized queue**: Single request queue for better load distribution
+4. **Scalable design**: Easily adjust number of workers (currently set to 100) based on load requirements
+5. **Reliable processing**: Prevents race conditions and request timeouts
 
 ## How to Run
 
-Build all binaries:
+Build and run the server:
 ```
-make all
-```
-
-Run the server with sync.Pool implementation:
-```
-make run-server-pool
+go run server.go
 ```
 
 Run a client:
 ```
-make run-client
+go run concurrent_client.go
 ```
 
-Run a concurrent client (sends multiple requests):
+Use the NATS CLI to test individual endpoints:
 ```
-make run-concurrent-client
+nats req echo "Hello World"
+nats req echo1 "Hello World"
 ```
 
 ## Implementation Details
 
-The sync.Pool implementation in `poolserver.go`:
+The errgroup-based worker pool implementation:
 
-1. Creates a pool of worker channels
-2. Pre-allocates a fixed number of worker goroutines
-3. Returns worker channels to the pool after handling a request
-4. Automatically handles request distribution
+1. Creates a central request queue for all incoming requests
+2. Manages worker goroutines with errgroup for better error handling
+3. Uses context cancellation for graceful shutdown
+4. Supports multiple endpoints ("echo" and "echo1") sharing the same worker pool
+5. Handles high concurrency with 100 workers and request queue buffer of 100
+6. Provides request timeout handling to prevent blocking
 
-This approach maintains the benefits of a worker pool while allowing more efficient resource utilization.
+This approach follows idiomatic Go patterns for concurrent programming with proper error handling and resource management.
