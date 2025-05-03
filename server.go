@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -14,28 +12,8 @@ import (
 )
 
 func main() {
-	// Define flags for running different server implementations
-	poolMode := flag.Bool("pool", false, "Run server with sync.Pool implementation")
-
-	// Parse command line arguments
-	flag.Parse()
-
-	// Print usage if requested
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: server -pool")
-		fmt.Println("  -pool: Use sync.Pool worker implementation")
-		os.Exit(1)
-	}
-
-	// Choose which server implementation to run
-	if *poolMode {
-		log.Println("Starting server with sync.Pool worker implementation")
-		RunPoolServer()
-	} else {
-		log.Println("Starting fixed server with improved sync.Pool implementation")
-		// Use the fixed implementation with proper channel handling
-		RunPoolServer()
-	}
+	log.Println("Starting NATS microservice with errgroup worker pool")
+	RunPoolServer()
 }
 
 const maxWorkers = 100 // Number of concurrent workers
